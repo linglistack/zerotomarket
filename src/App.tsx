@@ -1,24 +1,41 @@
 import React from 'react';
-import logo from './logo.svg';
+import Header from './components/Header';
+import Footer from './components/Footer';
 import './App.css';
+import './components/components.css';
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
+      <Header title="ZeroToMarket" />
+      <main className="App-header">
+        <h1>ZeroToMarket</h1>
         <p>
-          Edit <code>src/App.tsx</code> and save to reload.
+          Your journey from zero to market starts here.
         </p>
+        <div className="features">
+          <div className="feature">
+            <h3>Plan</h3>
+            <p>Define your product vision and strategy</p>
+          </div>
+          <div className="feature">
+            <h3>Build</h3>
+            <p>Create your product with expert guidance</p>
+          </div>
+          <div className="feature">
+            <h3>Launch</h3>
+            <p>Take your product to market confidently</p>
+          </div>
+        </div>
         <a
           className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
+          href="#"
           rel="noopener noreferrer"
         >
-          Learn React
+          Get Started
         </a>
-      </header>
+      </main>
+      <Footer />
     </div>
   );
 }

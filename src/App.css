@@ -22,9 +22,55 @@
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+  padding: 2rem;
 }
 
 .App-link {
+  color: #61dafb;
+  margin-top: 2rem;
+  text-decoration: none;
+  padding: 0.8rem 1.5rem;
+  background-color: #61dafb;
+  color: #282c34;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.App-link:hover {
+  background-color: #ffffff;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.feature {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 250px;
+  transition: all 0.3s ease;
+}
+
+.feature:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.feature h3 {
+  margin-top: 0;
   color: #61dafb;
 }
 
@@ -32,6 +78,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
