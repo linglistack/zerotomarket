@@ -1,42 +1,59 @@
 import React from 'react';
-import Header from './components/Header';
-import Footer from './components/Footer';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import Dashboard from './pages/Dashboard';
+import MarketingCampaign from './pages/NewProduct';
+import CompetitorInsights from './pages/CompetitorInsights';
+import ContentLibrary from './pages/ContentLibrary';
+import MainLayout from './layouts/MainLayout';
 import './App.css';
-import './components/components.css';
+
+// Create a theme instance
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#FF7E5F',
+      light: '#FFF0EB',
+      dark: '#E05A3B',
+    },
+    secondary: {
+      main: '#4ECDC4',
+    },
+    background: {
+      default: '#f8f9fa',
+    },
+  },
+  typography: {
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    h1: {
+      fontWeight: 700,
+    },
+    h2: {
+      fontWeight: 600,
+    },
+  },
+  shape: {
+    borderRadius: 8,
+  },
+});
 
 function App() {
   return (
-    <div className="App">
-      <Header title="ZeroToMarket" />
-      <main className="App-header">
-        <h1>ZeroToMarket</h1>
-        <p>
-          Your journey from zero to market starts here.
-        </p>
-        <div className="features">
-          <div className="feature">
-            <h3>Plan</h3>
-            <p>Define your product vision and strategy</p>
-          </div>
-          <div className="feature">
-            <h3>Build</h3>
-            <p>Create your product with expert guidance</p>
-          </div>
-          <div className="feature">
-            <h3>Launch</h3>
-            <p>Take your product to market confidently</p>
-          </div>
-        </div>
-        <a
-          className="App-link"
-          href="#"
-          rel="noopener noreferrer"
-        >
-          Get Started
-        </a>
-      </main>
-      <Footer />
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <Routes>
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="products/new" element={<MarketingCampaign />} />
+            <Route path="competitors" element={<CompetitorInsights />} />
+            <Route path="content" element={<ContentLibrary />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 
