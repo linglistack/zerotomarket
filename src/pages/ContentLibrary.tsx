@@ -11,26 +11,31 @@ import {
     Chip,
     TextField,
     InputAdornment,
-    Grid,
     Divider,
-    Menu,
-    MenuItem,
+    Tabs,
+    Tab,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemIcon,
     FormControl,
     InputLabel,
     Select,
-    SelectChangeEvent
+    SelectChangeEvent,
+    MenuItem
 } from '@mui/material';
 import {
+    Article as ArticleIcon,
     Twitter as TwitterIcon,
     LinkedIn as LinkedInIcon,
     Facebook as FacebookIcon,
     Email as EmailIcon,
     Reddit as RedditIcon,
     Search as SearchIcon,
-    FilterList as FilterIcon,
-    Share as ShareIcon,
+    Add as AddIcon,
     Edit as EditIcon,
     Delete as DeleteIcon,
+    Share as ShareIcon,
     ContentCopy as CopyIcon
 } from '@mui/icons-material';
 import { mockCampaigns } from '../mock-data/campaignData';

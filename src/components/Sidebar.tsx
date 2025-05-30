@@ -1,38 +1,40 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Drawer,
     List,
     ListItem,
     ListItemIcon,
     ListItemText,
-    Toolbar,
-    Divider,
     Box,
     Typography,
-    alpha,
-    Avatar,
-    ListItemButton
+    useTheme,
+    alpha
 } from '@mui/material';
 import {
     Dashboard as DashboardIcon,
     Campaign as CampaignIcon,
-    Insights as InsightsIcon,
+    TrendingUp as CompetitorIcon,
     LibraryBooks as ContentIcon,
-    AddCircleOutline as AddCircleOutlineIcon
+    Chat as ChatIcon
 } from '@mui/icons-material';
 
 const drawerWidth = 280;
 
 const Sidebar: React.FC = () => {
     const location = useLocation();
+    const navigate = useNavigate();
 
     const menuItems = [
         { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
         { text: 'Marketing Campaign', icon: <CampaignIcon />, path: '/products/new' },
-        { text: 'Competitor Insights', icon: <InsightsIcon />, path: '/competitors' },
+        { text: 'Competitor Insights', icon: <CompetitorIcon />, path: '/competitors' },
         { text: 'Content Library', icon: <ContentIcon />, path: '/content' },
     ];
+
+    const handleMenuClick = (path: string) => {
+        navigate(path);
+    };
 
     return (
         <Drawer
@@ -59,11 +61,9 @@ const Sidebar: React.FC = () => {
                         return (
                             <ListItem
                                 key={item.text}
-                                component={Link}
-                                to={item.path}
+                                onClick={() => handleMenuClick(item.path)}
                                 sx={{
                                     color: isActive ? 'primary.main' : 'text.primary',
-                                    textDecoration: 'none',
                                     backgroundColor: isActive
                                         ? alpha('#FF7E5F', 0.1)
                                         : 'transparent',
@@ -71,6 +71,7 @@ const Sidebar: React.FC = () => {
                                     mb: 1.5,
                                     py: 1.5,
                                     transition: 'all 0.2s',
+                                    cursor: 'pointer',
                                     '&:hover': {
                                         backgroundColor: isActive
                                             ? alpha('#FF7E5F', 0.15)

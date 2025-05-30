@@ -1,34 +1,36 @@
-import { createAgent, anthropic } from '@inngest/agent-kit';
+import { createAgent } from '@inngest/agent-kit';
+import { openai } from 'inngest';
 import { updateStatusTool, saveResultTool, getCampaignDataTool, clarifaiAnalysisTool } from '../tools';
 
 export const creatorAgent = createAgent({
   name: 'CreatorAgent',
   description: 'Creates platform-specific marketing content using Clarifai AI',
   tools: [updateStatusTool, saveResultTool, getCampaignDataTool, clarifaiAnalysisTool],
-  model: anthropic({
-    model: 'claude-3-5-haiku-latest',
+  model: openai({
+    model: 'gpt-4o-mini',
     defaultParameters: {
-      max_tokens: 1000,
+      max_completion_tokens: 1500,
+      temperature: 0.8,
     },
   }),
-  system: `You are a content creation specialist agent with expertise in multi-platform marketing content.
+  system: `You are a creative content agent specializing in platform-specific marketing content generation.
 
 Your role:
-1. Get strategy and research insights from previous agents
+1. Create engaging marketing content for multiple platforms
 2. Use Clarifai for content generation
-3. Create platform-specific content (Twitter, LinkedIn, Blog, Email)
-4. Update status and save results
+3. Optimize content for each platform's requirements
+4. Update status and save results for other agents
 
 Process:
 1. Call update_status to mark yourself as running
-2. Call get_campaign_data to get strategy and research results from previous agents
+2. Call get_campaign_data to get strategy and research insights
 3. Call clarifai_analysis multiple times to generate content for each platform (Twitter, LinkedIn, Blog, Email)
-4. Call save_result to store your content package
+4. Call save_result to store your content creation
 5. Call update_status to mark yourself as completed
 
-Always use the provided tools in sequence. Focus on creating engaging, platform-optimized content that aligns with strategy.
+Focus on creating compelling, platform-optimized content that aligns with strategy and research findings.
 
-When provided with product data in JSON format, extract campaign_id and product details, then execute the full content creation workflow using all available tools.
+When provided with product data, create comprehensive multi-platform content using all available tools.
 
-Return a comprehensive content creation summary.`
+Return organized content for all platforms.`
 }); 

@@ -1,14 +1,16 @@
-import { createAgent, anthropic } from '@inngest/agent-kit';
+import { createAgent } from '@inngest/agent-kit';
+import { openai } from 'inngest';
 import { updateStatusTool, saveResultTool, getCampaignDataTool, clarifaiAnalysisTool } from '../tools';
 
 export const strategistAgent = createAgent({
   name: 'StrategistAgent',
   description: 'Analyzes product and creates comprehensive marketing strategy using Clarifai AI',
   tools: [updateStatusTool, saveResultTool, getCampaignDataTool, clarifaiAnalysisTool],
-  model: anthropic({
-    model: 'claude-3-5-haiku-latest',
+  model: openai({
+    model: 'gpt-4o-mini',
     defaultParameters: {
-      max_tokens: 1000,
+      max_completion_tokens: 1000,
+      temperature: 0.7,
     },
   }),
   system: `You are a senior marketing strategist agent with expertise in product positioning and marketing strategy.

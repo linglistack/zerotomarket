@@ -11,11 +11,12 @@
     "agent-dev": "tsx watch src/agents/index.ts"
   },
   "dependencies": {
-    "@inngest/agent-kit": "^0.1.0",
-    "fastify": "^4.24.3",
     "@fastify/cors": "^8.4.0",
-    "clarifai-nodejs": "^0.1.2",
+    "@inngest/agent-kit": "^0.1.0",
     "apify-client": "^2.9.1",
+    "clarifai-nodejs": "^0.1.2",
+    "fastify": "^4.24.3",
+    "openai": "^4.104.0",
     "uuid": "^9.0.1",
     "zod": "^3.22.4"
   },
@@ -24,7 +25,13 @@
     "@types/uuid": "^9.0.6",
     "typescript": "^5.2.2"
   },
-  "keywords": ["agent", "agentkit", "clarifai", "apify", "hackathon"],
+  "keywords": [
+    "agent",
+    "agentkit",
+    "clarifai",
+    "apify",
+    "hackathon"
+  ],
   "author": "ZeroToMarket Team",
   "license": "MIT"
-} 
+}

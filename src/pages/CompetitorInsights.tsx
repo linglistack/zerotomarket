@@ -65,15 +65,19 @@ const CompetitorInsights: React.FC = () => {
     const { productId } = useParams<{ productId?: string }>();
     const [tabValue, setTabValue] = useState(0);
     const [selectedProduct, setSelectedProduct] = useState<string | undefined>(productId);
-    const [filteredInsights, setFilteredInsights] = useState(mockCompetitorInsights);
-    const [filteredPosts, setFilteredPosts] = useState(mockCompetitorPosts);
+    const [insights, setInsights] = useState(mockCompetitorInsights);
+    const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedIndustry, setSelectedIndustry] = useState('All');
+    const [selectedPlatform, setSelectedPlatform] = useState('All');
 
     useEffect(() => {
         if (selectedProduct) {
-            setFilteredInsights(mockCompetitorInsights.filter(insight => insight.productId === selectedProduct));
+            setInsights(mockCompetitorInsights.filter(insight => insight.productId === selectedProduct));
         } else {
-            setFilteredInsights(mockCompetitorInsights);
+            setInsights(mockCompetitorInsights);
         }
+        setLoading(false);
     }, [selectedProduct]);
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -99,10 +103,19 @@ const CompetitorInsights: React.FC = () => {
         }
     };
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
         return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     };
+
+    const displayedInsights = insights.filter(insight => {
+        const matchesSearch = insight.competitorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                             insight.keyInsight.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesIndustry = selectedIndustry === 'All' || insight.source === selectedIndustry.toLowerCase();
+        const matchesPlatform = selectedPlatform === 'All' || insight.source === selectedPlatform.toLowerCase();
+        
+        return matchesSearch && matchesIndustry && matchesPlatform;
+    });
 
     return (
         <Box>
@@ -141,7 +154,7 @@ const CompetitorInsights: React.FC = () => {
 
                 <TabPanel value={tabValue} index={0}>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                        {filteredInsights.map((insight) => (
+                        {displayedInsights.map((insight) => (
                             <Box key={insight.id} sx={{ width: { xs: '100%', md: 'calc(50% - 16px)' } }}>
                                 <Card sx={{ height: '100%' }}>
                                     <CardContent>
@@ -189,7 +202,7 @@ const CompetitorInsights: React.FC = () => {
 
                 <TabPanel value={tabValue} index={1}>
                     <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-                        {filteredPosts.map((post, index) => (
+                        {mockCompetitorPosts.map((post, index) => (
                             <React.Fragment key={post.id}>
                                 <ListItem alignItems="flex-start">
                                     <ListItemAvatar>
@@ -237,7 +250,7 @@ const CompetitorInsights: React.FC = () => {
                                         }
                                     />
                                 </ListItem>
-                                {index < filteredPosts.length - 1 && <Divider variant="inset" component="li" />}
+                                {index < mockCompetitorPosts.length - 1 && <Divider variant="inset" component="li" />}
                             </React.Fragment>
                         ))}
                     </List>

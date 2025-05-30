@@ -1,305 +1,339 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import {
-    Box,
+    Container,
     Typography,
     Card,
     CardContent,
-    CardActions,
+    Box,
     Button,
-    LinearProgress,
     Chip,
+    LinearProgress,
+    Paper,
     Alert,
-    Divider,
-    Tab,
-    Tabs,
-    Grid
+    IconButton,
+    Tooltip,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemIcon,
+    Divider
 } from '@mui/material';
 import {
+    Add as AddIcon,
     Campaign as CampaignIcon,
-    Refresh as RefreshIcon
+    Visibility as ViewIcon,
+    Refresh as RefreshIcon,
+    Analytics as AnalyticsIcon
 } from '@mui/icons-material';
-import { mockProducts } from '../mock-data/productData';
-import { mockAgents } from '../types/agent';
+import { useNavigate } from 'react-router-dom';
+import { apiService } from '../services/api';
 
-const statusColors = {
-    analyzing: 'primary',
-    researching: 'secondary',
-    creating: 'info',
-    publishing: 'warning',
-    completed: 'success'
-};
-
-interface TabPanelProps {
-    children?: React.ReactNode;
-    index: number;
-    value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-    const { children, value, index, ...other } = props;
-
-    return (
-        <div
-            role="tabpanel"
-            hidden={value !== index}
-            id={`dashboard-tabpanel-${index}`}
-            aria-labelledby={`dashboard-tab-${index}`}
-            {...other}
-        >
-            {value === index && (
-                <Box sx={{ py: 3 }}>
-                    {children}
-                </Box>
-            )}
-        </div>
-    );
+interface CampaignSummary {
+    campaign_id: string;
+    status: string;
+    agents: Record<string, any>;
+    results?: any;
+    created_at: string;
 }
 
 const Dashboard: React.FC = () => {
-    const [tabValue, setTabValue] = useState(0);
-    const [agents, setAgents] = useState(mockAgents);
+    const navigate = useNavigate();
+    const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [healthStatus, setHealthStatus] = useState<any>(null);
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-        setTabValue(newValue);
+    useEffect(() => {
+        checkHealth();
+        // Load campaigns from localStorage (for demo purposes)
+        const storedCampaigns = localStorage.getItem('zeroToMarket_campaigns');
+        if (storedCampaigns) {
+            try {
+                const campaignIds = JSON.parse(storedCampaigns);
+                loadCampaigns(campaignIds);
+            } catch (error) {
+                console.error('Error loading stored campaigns:', error);
+            }
+        }
+    }, []);
+
+    const checkHealth = async () => {
+        try {
+            const health = await apiService.checkHealth();
+            setHealthStatus(health);
+        } catch (error) {
+            console.error('Health check failed:', error);
+        }
     };
 
-    const toggleAgentRunning = (agentId: string) => {
-        setAgents(agents.map(agent =>
-            agent.id === agentId
-                ? { ...agent, status: { ...agent.status, isRunning: !agent.status.isRunning, error: undefined } }
-                : agent
-        ));
+    const loadCampaigns = async (campaignIds: string[]) => {
+        setLoading(true);
+        try {
+            const campaignPromises = campaignIds.map(id => 
+                apiService.getCampaignStatus(id).catch(error => {
+                    console.error(`Error loading campaign ${id}:`, error);
+                    return null;
+                })
+            );
+            const results = await Promise.all(campaignPromises);
+            const validCampaigns = results.filter(campaign => campaign !== null) as CampaignSummary[];
+            setCampaigns(validCampaigns);
+        } catch (error) {
+            console.error('Error loading campaigns:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const getAgentStatusColor = (agent: typeof agents[0]) => {
-        if (agent.status.error) return 'error';
-        if (agent.status.isRunning) return 'success';
-        return 'default';
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'completed': return 'success';
+            case 'running': return 'primary';
+            case 'failed': return 'error';
+            default: return 'default';
+        }
+    };
+
+    const getAgentProgress = (agents: Record<string, any>) => {
+        if (!agents) return 0;
+        const agentList = Object.values(agents);
+        const totalProgress = agentList.reduce((sum, agent) => sum + (agent.progress || 0), 0);
+        return Math.round(totalProgress / agentList.length);
+    };
+
+    const handleViewCampaign = (campaignId: string) => {
+        // Store the campaign ID and navigate to NewProduct page
+        sessionStorage.setItem('viewCampaignId', campaignId);
+        navigate('/new-product');
+    };
+
+    const handleRefresh = () => {
+        const storedCampaigns = localStorage.getItem('zeroToMarket_campaigns');
+        if (storedCampaigns) {
+            try {
+                const campaignIds = JSON.parse(storedCampaigns);
+                loadCampaigns(campaignIds);
+            } catch (error) {
+                console.error('Error refreshing campaigns:', error);
+            }
+        }
+        checkHealth();
     };
 
     return (
-        <Box>
-            <Alert severity="info" sx={{ mb: 3 }}>
-                New! You can now chat with our AI to analyze your product and generate marketing content. Try it in any product's details page.
-            </Alert>
-
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                <Typography
-                    variant="h4"
-                    component="h1"
-                    sx={{
-                        background: 'linear-gradient(135deg, #FF7E5F 0%, #FEB47B 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        fontWeight: 600
-                    }}
-                >
-                    ZeroToMarket Dashboard
-                </Typography>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    component={Link}
-                    to="/products/new"
-                    startIcon={<CampaignIcon />}
-                    sx={{
-                        borderRadius: 2,
-                        background: 'linear-gradient(135deg, #FF7E5F 0%, #FEB47B 100%)',
-                        px: 3
-                    }}
-                >
-                    New Marketing Campaign
-                </Button>
-            </Box>
-
-            <Card sx={{ mb: 4, borderRadius: 3, overflow: 'hidden' }}>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs
-                        value={tabValue}
-                        onChange={handleTabChange}
-                        aria-label="dashboard tabs"
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+            {/* Header */}
+            <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                    <Typography
+                        variant="h4"
+                        component="h1"
+                        gutterBottom
                         sx={{
-                            '& .MuiTab-root': { py: 2 },
-                            '& .Mui-selected': { fontWeight: 600 },
-                            px: 2
+                            fontWeight: 600,
+                            background: 'linear-gradient(135deg, #FF7E5F 0%, #FEB47B 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
                         }}
                     >
-                        <Tab label="Campaigns" />
-                        <Tab label="AI Agents" />
-                    </Tabs>
+                        🚀 Marketing Dashboard
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        Monitor your AI-powered marketing campaigns
+                    </Typography>
                 </Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Tooltip title="Refresh data">
+                        <IconButton onClick={handleRefresh} color="primary">
+                            <RefreshIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => navigate('/new-product')}
+                        sx={{
+                            background: 'linear-gradient(135deg, #FF7E5F 0%, #FEB47B 100%)',
+                            fontWeight: 600,
+                            borderRadius: 2,
+                            '&:hover': {
+                                boxShadow: '0 6px 20px rgba(255, 126, 95, 0.3)'
+                            }
+                        }}
+                    >
+                        New Campaign
+                    </Button>
+                </Box>
+            </Box>
 
-                <TabPanel value={tabValue} index={0}>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, p: 2 }}>
-                        {mockProducts.map((product) => (
-                            <Box key={product.id} sx={{ width: { xs: '100%', md: 'calc(50% - 24px)', lg: 'calc(33.333% - 24px)' } }}>
-                                <Card sx={{
-                                    height: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    borderRadius: 2,
-                                    overflow: 'hidden',
-                                    boxShadow: '0 6px 20px rgba(255, 126, 95, 0.08)'
-                                }}>
-                                    <CardContent sx={{ flexGrow: 1 }}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                            <Typography variant="h6" component="h2">
-                                                {product.name}
-                                            </Typography>
-                                            <Chip
-                                                label={product.status.charAt(0).toUpperCase() + product.status.slice(1)}
-                                                color={statusColors[product.status] as any}
-                                                size="small"
-                                            />
-                                        </Box>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                            {product.description.length > 120
-                                                ? `${product.description.substring(0, 120)}...`
-                                                : product.description}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ mb: 1 }}>
-                                            <strong>Target:</strong> {product.targetCustomer.length > 60
-                                                ? `${product.targetCustomer.substring(0, 60)}...`
-                                                : product.targetCustomer}
-                                        </Typography>
-                                        <Box sx={{ mt: 2 }}>
-                                            <Typography variant="body2" sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                                <span>Progress:</span>
-                                                <span>{product.progress}%</span>
-                                            </Typography>
-                                            <LinearProgress
-                                                variant="determinate"
-                                                value={product.progress}
-                                                sx={{ height: 8, borderRadius: 5 }}
-                                            />
-                                        </Box>
-                                    </CardContent>
-                                    <Divider />
-                                    <CardActions sx={{ px: 2, py: 1.5 }}>
-                                        <Button
-                                            size="small"
-                                            component={Link}
-                                            to={`/products/${product.id}`}
-                                            sx={{ borderRadius: 1.5 }}
-                                        >
-                                            View Details
-                                        </Button>
-                                        <Button
-                                            size="small"
-                                            component={Link}
-                                            to={`/content`}
-                                            sx={{ borderRadius: 1.5 }}
-                                        >
-                                            Content
-                                        </Button>
-                                        <Button
-                                            size="small"
-                                            component={Link}
-                                            to={`/competitors`}
-                                            sx={{ borderRadius: 1.5 }}
-                                        >
-                                            Insights
-                                        </Button>
-                                    </CardActions>
-                                </Card>
-                            </Box>
-                        ))}
-                    </Box>
-                </TabPanel>
+            {/* System Status */}
+            {healthStatus && (
+                <Alert 
+                    severity="success" 
+                    sx={{ mb: 3, borderRadius: 2 }}
+                    icon={<AnalyticsIcon />}
+                >
+                    <Typography variant="body2">
+                        AI Agent System Online • {healthStatus.agents} • Backend: {healthStatus.status}
+                    </Typography>
+                </Alert>
+            )}
 
-                <TabPanel value={tabValue} index={1}>
-                    <Box sx={{ p: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                            <Typography variant="h6" component="h2">
-                                AI Agent Status
-                            </Typography>
-                            <Button
-                                variant="outlined"
-                                startIcon={<RefreshIcon />}
-                                onClick={() => console.log('Refresh agents status')}
-                                size="small"
-                                sx={{ borderRadius: 2 }}
-                            >
-                                Refresh Status
-                            </Button>
-                        </Box>
+            {/* Loading Indicator */}
+            {loading && (
+                <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 1 }}>Loading campaigns...</Typography>
+                    <LinearProgress />
+                </Paper>
+            )}
 
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                            {agents.map(agent => (
-                                <Box key={agent.id} sx={{ width: { xs: '100%', md: 'calc(50% - 16px)' } }}>
-                                    <Card
-                                        sx={{
-                                            height: '100%',
-                                            borderRadius: 2,
-                                            borderLeft: agent.status.isRunning ? '4px solid #4caf50' : agent.status.error ? '4px solid #f44336' : 'none',
-                                            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.05)'
-                                        }}
-                                    >
-                                        <CardContent>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                                                <Box>
-                                                    <Typography variant="subtitle1" fontWeight={600} component="h3">
-                                                        {agent.name}
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                                                        {agent.description.length > 100
-                                                            ? `${agent.description.substring(0, 100)}...`
-                                                            : agent.description}
-                                                    </Typography>
-                                                </Box>
-                                                <Chip
-                                                    label={agent.status.isRunning ? 'Running' : agent.status.error ? 'Error' : 'Idle'}
-                                                    color={getAgentStatusColor(agent)}
-                                                    size="small"
-                                                />
-                                            </Box>
-
-                                            <Box sx={{ mb: 2 }}>
-                                                <Typography variant="body2" sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                                    <span>Progress:</span>
-                                                    <span>{agent.status.progress}%</span>
-                                                </Typography>
-                                                <LinearProgress
-                                                    variant="determinate"
-                                                    value={agent.status.progress}
-                                                    color={agent.status.error ? 'error' : 'primary'}
-                                                    sx={{ height: 8, borderRadius: 5 }}
-                                                />
-                                            </Box>
-
-                                            {agent.status.currentTask && (
-                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                    <strong>Current Task:</strong> {agent.status.currentTask}
-                                                </Typography>
-                                            )}
-
-                                            {agent.status.error && (
-                                                <Typography variant="body2" color="error" sx={{ mb: 1 }}>
-                                                    <strong>Error:</strong> {agent.status.error}
-                                                </Typography>
-                                            )}
-
-                                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                                                <Button
-                                                    variant="contained"
-                                                    color={agent.status.isRunning ? "warning" : "success"}
-                                                    onClick={() => toggleAgentRunning(agent.id)}
-                                                    size="small"
-                                                    sx={{ borderRadius: 2, px: 2 }}
-                                                >
-                                                    {agent.status.isRunning ? 'Pause' : 'Start'}
-                                                </Button>
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
+            {/* Campaigns Grid */}
+            {campaigns.length > 0 ? (
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, gap: 3 }}>
+                    {campaigns.map((campaign, index) => (
+                        <Card 
+                            key={campaign.campaign_id}
+                            sx={{ 
+                                height: '100%',
+                                borderRadius: 3,
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    boxShadow: '0 8px 25px rgba(255, 126, 95, 0.15)',
+                                    transform: 'translateY(-2px)'
+                                }
+                            }}
+                        >
+                            <CardContent sx={{ p: 3 }}>
+                                {/* Campaign Header */}
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                    <Typography variant="h6" fontWeight={600} color="primary.dark">
+                                        Campaign {index + 1}
+                                    </Typography>
+                                    <Chip 
+                                        label={campaign.status.toUpperCase()} 
+                                        color={getStatusColor(campaign.status)}
+                                        size="small"
+                                        sx={{ fontWeight: 600 }}
+                                    />
                                 </Box>
-                            ))}
-                        </Box>
-                    </Box>
-                </TabPanel>
-            </Card>
-        </Box>
+
+                                {/* Campaign Info */}
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    Created: {new Date(campaign.created_at).toLocaleDateString()}
+                                </Typography>
+
+                                {/* Progress Bar */}
+                                {campaign.status === 'running' && (
+                                    <Box sx={{ mb: 2 }}>
+                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                            Progress: {getAgentProgress(campaign.agents)}%
+                                        </Typography>
+                                        <LinearProgress 
+                                            variant="determinate" 
+                                            value={getAgentProgress(campaign.agents)}
+                                            sx={{ borderRadius: 1 }}
+                                        />
+                                    </Box>
+                                )}
+
+                                {/* Agent Status */}
+                                {campaign.agents && (
+                                    <Box sx={{ mb: 2 }}>
+                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                            Agents:
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                                            {Object.entries(campaign.agents).map(([agentName, agentData]: [string, any]) => (
+                                                <Chip
+                                                    key={agentName}
+                                                    label={`${agentName}: ${agentData.status}`}
+                                                    size="small"
+                                                    variant="outlined"
+                                                    color={agentData.status === 'completed' ? 'success' : 'default'}
+                                                />
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+
+                                {/* Results Summary */}
+                                {campaign.status === 'completed' && campaign.results && (
+                                    <Box sx={{ mb: 2 }}>
+                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                            Campaign Results:
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                                            {campaign.results.strategy && (
+                                                <Chip label="Strategy ✓" size="small" color="success" variant="outlined" />
+                                            )}
+                                            {campaign.results.research && (
+                                                <Chip label="Research ✓" size="small" color="success" variant="outlined" />
+                                            )}
+                                            {campaign.results.content && (
+                                                <Chip label="Content ✓" size="small" color="success" variant="outlined" />
+                                            )}
+                                            {campaign.results.final_campaign && (
+                                                <Chip label="Optimized ✓" size="small" color="success" variant="outlined" />
+                                            )}
+                                        </Box>
+                                    </Box>
+                                )}
+
+                                {/* Actions */}
+                                <Button
+                                    fullWidth
+                                    variant="outlined"
+                                    startIcon={<ViewIcon />}
+                                    onClick={() => handleViewCampaign(campaign.campaign_id)}
+                                    sx={{
+                                        borderRadius: 2,
+                                        fontWeight: 600,
+                                        '&:hover': {
+                                            background: 'linear-gradient(135deg, rgba(255, 126, 95, 0.1) 0%, rgba(254, 180, 123, 0.1) 100%)'
+                                        }
+                                    }}
+                                >
+                                    View Campaign
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </Box>
+            ) : (
+                /* Empty State */
+                <Paper sx={{ 
+                    p: 6, 
+                    textAlign: 'center', 
+                    borderRadius: 3,
+                    background: 'linear-gradient(135deg, rgba(255, 126, 95, 0.05) 0%, rgba(254, 180, 123, 0.05) 100%)'
+                }}>
+                    <CampaignIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+                    <Typography variant="h5" fontWeight={600} color="primary.dark" gutterBottom>
+                        Welcome to ZeroToMarket
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
+                        Create your first AI-powered marketing campaign! Our agents will handle strategy, research, content creation, and optimization automatically.
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        size="large"
+                        startIcon={<AddIcon />}
+                        onClick={() => navigate('/new-product')}
+                        sx={{
+                            background: 'linear-gradient(135deg, #FF7E5F 0%, #FEB47B 100%)',
+                            fontWeight: 600,
+                            borderRadius: 2,
+                            px: 4,
+                            py: 1.5,
+                            '&:hover': {
+                                boxShadow: '0 6px 20px rgba(255, 126, 95, 0.3)'
+                            }
+                        }}
+                    >
+                        Create Your First Campaign
+                    </Button>
+                </Paper>
+            )}
+        </Container>
     );
 };
 
